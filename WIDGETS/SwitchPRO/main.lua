@@ -23,9 +23,17 @@
 local name = "SwitchPRO"
 local libGUI
 
-function loadGUI()
+-- CHANGE: unique global name prevents collision with SwProHD's loadGUI_SwProHD()
+-- when both widgets are loaded simultaneously.
+-- WHY: loadGUI() is declared without `local`, making it a global function.
+-- That is intentional — loadable.lua calls back into main.lua through this
+-- global to get the GUI library.  When both SwitchPRO and SwProHD are loaded
+-- at the same time, whichever loads last overwrites the global, and
+-- loadable.lua ends up pointing at the wrong folder ("file not found").
+-- Giving each version a unique global name avoids the collision.
+function loadGUI_SwitchPRO()
   if not libGUI then
-  	libGUI = loadScript("/WIDGETS/" .. name .. "/libgui.lua")
+    libGUI = loadScript("/WIDGETS/" .. name .. "/libgui.lua")
   end
   return libGUI()
 end
@@ -46,14 +54,14 @@ end
 
 local options = {
   { "Source", SOURCE, 1 },
-  { "Label", STRING , "" },
-  { "SwUp", STRING , "Up" },
-  { "SwMid", STRING , "Medium" },
-	{ "SwDown", STRING , "Down" },
+  { "Label",  STRING, "" },
+  { "SwUp",   STRING, "Up" },
+  { "SwMid",  STRING, "Medium" },
+  { "SwDown", STRING, "Down" },
 }
 
 local function update(widget, options)
-	widget.update(options)
+  widget.update(options)
 end
 
 return {

@@ -21,8 +21,27 @@
 
 local lib = { }
 
--- Radius of slider dot
-local SLIDER_DOT_RADIUS = 10
+-- ── CHANGE: HiRes screen detection ──────────────────────────────────────
+-- The only hardcoded pixel value in this library is SLIDER_DOT_RADIUS.
+-- All other coordinates are passed in by the caller (loadable.lua) and
+-- already scaled there.  We only need a local scale helper for this one
+-- constant.
+--
+-- Prefixed with _ to make clear these are private to this patch block
+-- and not part of the original library interface.
+local _IS_HIRES = (LCD_W ~= nil) and (LCD_W >= 800) or false
+local _SCALE    = _IS_HIRES and (800 / 480) or 1.0
+local function _S(px) return math.floor(px * _SCALE + 0.5) end
+-- ─────────────────────────────────────────────────────────────────────────
+
+-- CHANGE: SLIDER_DOT_RADIUS scaled via _S().
+-- Original value was hardcoded 10px, designed for the 480×272 screen.
+-- On the 800×480 MK3 that renders as a tiny dot relative to the larger
+-- display.  _S(10) scales it to ~17px on the MK3 and leaves it at 10px
+-- on all other radios (because _SCALE = 1.0 there).
+-- The slider is used in the full-screen settings UI, not the main widget
+-- display, so this only affects the widget configuration overlay.
+local SLIDER_DOT_RADIUS = _S(10)
 
 -- Default flags and colors, can be changed by client
 lib.flags = 0

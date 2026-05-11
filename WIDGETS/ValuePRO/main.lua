@@ -23,9 +23,17 @@
 local name = "ValuePRO"
 local libGUI
 
-function loadGUI()
+-- CHANGE: unique global name prevents collision with other widgets'
+-- loadGUI() when multiple widgets are loaded simultaneously.
+-- WHY: loadGUI() is declared without `local`, making it a global function.
+-- That is intentional — loadable.lua calls back into main.lua through this
+-- global to get the GUI library.  When SwitchPRO and ValuePRO are both
+-- loaded at the same time, whichever loads last overwrites the global, and
+-- loadable.lua ends up pointing at the wrong folder ("file not found").
+-- Giving each widget a unique global name avoids the collision.
+function loadGUI_ValuePRO()
   if not libGUI then
-  	libGUI = loadScript("/WIDGETS/" .. name .. "/libgui.lua")
+    libGUI = loadScript("/WIDGETS/" .. name .. "/libgui.lua")
   end
   return libGUI()
 end
@@ -45,15 +53,15 @@ local function background(widget)
 end
 
 local options = {
-  { "Source", SOURCE, 1 },
-  { "Label", STRING , "" },
-  { "Percent", BOOL , 0 },
-  { "Min", VALUE, -1024, -1024, 1024 },
-	{ "Max", VALUE, 1024, -1024, 1024 }
+  { "Source",  SOURCE, 1 },
+  { "Label",   STRING, "" },
+  { "Percent", BOOL,   0 },
+  { "Min",     VALUE,  -1024, -1024, 1024 },
+  { "Max",     VALUE,   1024, -1024, 1024 },
 }
 
 local function update(widget, options)
-	widget.update(options)
+  widget.update(options)
 end
 
 return {

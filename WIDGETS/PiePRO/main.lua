@@ -25,9 +25,17 @@
 local name = "PiePRO"
 local libGUI
 
-function loadGUI()
+-- CHANGE: unique global name prevents collision with other widgets'
+-- loadGUI() when multiple widgets are loaded simultaneously.
+-- WHY: loadGUI() is declared without `local`, making it a global function.
+-- That is intentional — loadable.lua calls back into main.lua through this
+-- global to get the GUI library.  When PiePRO, GaugePRO, SwitchPRO and
+-- ValuePRO are all loaded at the same time, whichever loads last overwrites
+-- the global, and loadable.lua ends up pointing at the wrong folder.
+-- Giving each widget a unique global name avoids the collision.
+function loadGUI_PiePRO()
   if not libGUI then
-  	libGUI = loadScript("/WIDGETS/" .. name .. "/libgui.lua")
+    libGUI = loadScript("/WIDGETS/" .. name .. "/libgui.lua")
   end
   return libGUI()
 end
@@ -48,14 +56,14 @@ end
 
 local options = {
   { "Source", SOURCE, 1 },
-  { "Label", STRING , "" },
-  { "Warn", VALUE, 80, -100, 100 },
-  { "Min", VALUE, -1024, -1024, 1024 },
-	{ "Max", VALUE, 1024, -1024, 1024 }
+  { "Label",  STRING, "" },
+  { "Warn",   VALUE,  80, -100, 100 },
+  { "Min",    VALUE,  -1024, -1024, 1024 },
+  { "Max",    VALUE,   1024, -1024, 1024 },
 }
 
 local function update(widget, options)
-	widget.update(options)
+  widget.update(options)
 end
 
 return {
