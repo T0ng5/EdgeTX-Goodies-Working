@@ -21,8 +21,27 @@
 
 local lib = { }
 
--- Radius of slider dot
-local SLIDER_DOT_RADIUS = 10
+-- ── CHANGE: HiRes screen detection ──────────────────────────────────────
+-- The only hardcoded pixel value in this library is SLIDER_DOT_RADIUS.
+-- All other coordinates are passed in by the caller (loadable.lua) and
+-- already scaled there.  We only need a local scale helper for this one
+-- constant.
+--
+-- Prefixed with _ to make clear these are private to this patch block
+-- and not part of the original library interface.
+local _IS_HIRES = (LCD_W ~= nil) and (LCD_W >= 800) or false
+local _SCALE    = _IS_HIRES and (800 / 480) or 1.0
+local function _S(px) return math.floor(px * _SCALE + 0.5) end
+-- ─────────────────────────────────────────────────────────────────────────
+
+-- CHANGE: SLIDER_DOT_RADIUS scaled via _S().
+-- Original value was hardcoded 10px, designed for the 480×272 screen.
+-- On the 800×480 MK3 that renders as a tiny dot relative to the larger
+-- display.  _S(10) scales it to ~17px on the MK3 and leaves it at 10px
+-- on all other radios (because _SCALE = 1.0 there).
+-- The slider is used in the full-screen settings UI, not the main widget
+-- display, so this only affects the widget configuration overlay.
+local SLIDER_DOT_RADIUS = _S(10)
 
 -- Default flags and colors, can be changed by client
 lib.flags = 0
@@ -599,9 +618,7 @@ function lib.newGUI()
     callBack = callBack or doNothing
 
     local function setFirstVisible(v)
-      firstVisible = v
-      firstVisible = math.max(1, firstVisible)
-      firstVisible = math.min(#self.items - visibleCount + 1, firstVisible)
+      firstVisible = math.max(1, math.min(#self.items - visibleCount + 1, v))
     end
     
     local function adjustScroll()
@@ -773,11 +790,11 @@ function lib.newGUI()
       end
     end
 
-    local onMenu = self.onEvent
-    
+    local onMenuEvt = self.onEvent
+
     function self.onEvent(event, touchState)
       if showingMenu then
-        onMenu(event, touchState)
+        onMenuEvt(event, touchState)
       elseif event == EVT_VIRTUAL_ENTER then
         -- Show drop down and let it take over while active
         showingMenu = true
@@ -849,8 +866,7 @@ function lib.newGUI()
       
       if event == EVT_TOUCH_SLIDE then
         local value = self.min + (self.max - self.min) * (touchState.x - x) / w
-        value = math.min(self.max, value)
-        value = math.max(self.min, value)
+        value = math.min(self.max, math.max(self.min, value))
         self.value = self.min + self.delta * math.floor((value - self.min) / self.delta + 0.5)
       end
       
@@ -916,8 +932,7 @@ function lib.newGUI()
       
       if event == EVT_TOUCH_SLIDE then
         local value = self.max - (self.max - self.min) * (touchState.y - y) / h
-        value = math.min(self.max, value)
-        value = math.max(self.min, value)
+        value = math.min(self.max, math.max(self.min, value))
         self.value = self.min + self.delta * math.floor((value - self.min) / self.delta + 0.5)
       end
 
